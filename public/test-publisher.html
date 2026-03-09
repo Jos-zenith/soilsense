@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Test Data Publisher</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2d5016;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.stop {
+            background: #f44336;
+        }
+        button.stop:hover {
+            background: #da190b;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .publishing {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .log {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        .sensor-values {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .sensor-values div {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌾 SoilSense Test Data Publisher</h1>
+        <p>Simulate ESP32 sensor data for testing</p>
+        
+        <div id="status" class="status disconnected">
+            ❌ Not Connected
+        </div>
+
+        <div class="sensor-values" id="sensorValues" style="display: none;">
+            <h3>📊 Current Sensor Readings:</h3>
+            <div>🌡️ Temperature: <span id="temp">0</span>°C</div>
+            <div>💧 Moisture: <span id="moisture">0</span>%</div>
+            <div>⚗️ pH: <span id="ph">0</span></div>
+            <div>🌱 Nitrogen: <span id="nitrogen">0</span> ppm</div>
+            <div>🧪 Phosphorus: <span id="phosphorus">0</span> ppm</div>
+            <div>🔬 Potassium: <span id="potassium">0</span> ppm</div>
+        </div>
+
+        <button id="connectBtn" onclick="connect()">Connect to Broker</button>
+        <button id="startBtn" onclick="startPublishing()" style="display: none;">Start Publishing Data</button>
+        <button id="stopBtn" onclick="stopPublishing()" style="display: none;" class="stop">Stop Publishing</button>
+
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        const MQTT_CONFIG = {
+            broker: 'wss://bec6e48a9b5e4d27860b9d4d491e6d88.s1.eu.hivemq.cloud:8884/mqtt',
+            username: 'hivemq.webclient.1773056535268',
+            password: 'FtTa<R3gr29S,VwO:@0n',
+            topic: 'soilsense/sensor/data',
+            clientId: 'SoilSenseTestPublisher_' + Math.random().toString(16).substr(2, 8)
+        };
+
+        let client = null;
+        let publishInterval = null;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML = `[${timestamp}] ${message}<br>` + logDiv.innerHTML;
+        }
+
+        function updateStatus(status, className) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = status;
+            statusDiv.className = 'status ' + className;
+        }
+
+        function connect() {
+            log('🔌 Connecting to HiveMQ Cloud...');
+            
+            client = mqtt.connect(MQTT_CONFIG.broker, {
+                clientId: MQTT_CONFIG.clientId,
+                username: MQTT_CONFIG.username,
+                password: MQTT_CONFIG.password,
+                clean: true,
+                reconnectPeriod: 5000,
+                connectTimeout: 30000
+            });
+
+            client.on('connect', () => {
+                log('✅ Connected successfully!');
+                updateStatus('✅ Connected to HiveMQ Cloud', 'connected');
+                document.getElementById('connectBtn').style.display = 'none';
+                document.getElementById('startBtn').style.display = 'inline-block';
+            });
+
+            client.on('error', (err) => {
+                log('❌ Connection error: ' + err.message);
+                updateStatus('❌ Connection Failed', 'disconnected');
+            });
+
+            client.on('offline', () => {
+                log('⚠️ Client went offline');
+                updateStatus('⚠️ Offline', 'disconnected');
+            });
+        }
+
+        function generateSensorData() {
+            // Generate realistic sensor data with some variation
+            const baseTemp = 25;
+            const baseMoisture = 45;
+            const basePH = 6.5;
+            const baseN = 120;
+            const baseP = 80;
+            const baseK = 150;
+
+            const data = {
+                temperature: (baseTemp + Math.random() * 10 - 5).toFixed(1),
+                moisture: Math.floor(baseMoisture + Math.random() * 20 - 10),
+                soil_ph: (basePH + Math.random() * 2 - 1).toFixed(2),
+                nitrogen: Math.floor(baseN + Math.random() * 40 - 20),
+                phosphorus: Math.floor(baseP + Math.random() * 30 - 15),
+                potassium: Math.floor(baseK + Math.random() * 50 - 25),
+                timestamp: new Date().toISOString()
+            };
+
+            // Update display
+            document.getElementById('temp').textContent = data.temperature;
+            document.getElementById('moisture').textContent = data.moisture;
+            document.getElementById('ph').textContent = data.soil_ph;
+            document.getElementById('nitrogen').textContent = data.nitrogen;
+            document.getElementById('phosphorus').textContent = data.phosphorus;
+            document.getElementById('potassium').textContent = data.potassium;
+
+            return data;
+        }
+
+        function startPublishing() {
+            log('📡 Starting to publish sensor data...');
+            updateStatus('📡 Publishing Data Every 3 Seconds', 'publishing');
+            document.getElementById('sensorValues').style.display = 'block';
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'inline-block';
+
+            // Publish immediately
+            publishData();
+
+            // Then publish every 3 seconds
+            publishInterval = setInterval(publishData, 3000);
+        }
+
+        function publishData() {
+            if (!client || !client.connected) {
+                log('❌ Not connected to broker');
+                stopPublishing();
+                return;
+            }
+
+            const sensorData = generateSensorData();
+            const payload = JSON.stringify(sensorData);
+
+            client.publish(MQTT_CONFIG.topic, payload, { qos: 1 }, (err) => {
+                if (err) {
+                    log('❌ Publish error: ' + err.message);
+                } else {
+                    log('✅ Published: T=' + sensorData.temperature + '°C, M=' + 
+                        sensorData.moisture + '%, pH=' + sensorData.soil_ph);
+                }
+            });
+        }
+
+        function stopPublishing() {
+            if (publishInterval) {
+                clearInterval(publishInterval);
+                publishInterval = null;
+                log('⏸️ Stopped publishing');
+                updateStatus('⏸️ Connected but Not Publishing', 'connected');
+                document.getElementById('startBtn').style.display = 'inline-block';
+                document.getElementById('stopBtn').style.display = 'none';
+            }
+        }
+
+        // Auto-connect on load
+        window.addEventListener('load', () => {
+            log('📱 Test Publisher Ready');
+            log('Click "Connect to Broker" to begin');
+        });
+    </script>
+</body>
+</html>

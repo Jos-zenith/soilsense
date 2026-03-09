@@ -105,8 +105,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useAppStore } from '../../stores/appStore';
+import { MQTTSensorService } from '../../services/mqttService';
+import type { SensorData } from '../../types/crop';
 import SensorFeedCard from './SensorFeedCard.vue';
 import YieldSliderCard from './YieldSliderCard.vue';
 import CropMatchMatrix from './CropMatchMatrix.vue';
@@ -117,34 +119,54 @@ import ROIDashboard from './ROIDashboard.vue';
 
 const store = useAppStore();
 const isOnline = ref(navigator.onLine);
+const mqttService = ref<MQTTSensorService | null>(null);
 
 const mqttConnected = computed(() => store.mqttConnected);
 
 const toggleMQTT = () => {
   if (mqttConnected.value) {
-    // Disconnect logic (can be implemented with mqtt service)
-    store.setMQTTConnection(false);
+    // Disconnect from MQTT
+    disconnectMQTT();
   } else {
-    // Connect and simulate sensor data for demo
-    store.setMQTTConnection(true);
-    simulateSensorData();
+    // Connect to real ESP32 MQTT broker
+    connectToRealMQTT();
   }
 };
 
-// Simulate sensor data for demo purposes
-const simulateSensorData = () => {
-  const mockData = {
-    soil_ph: 6.5,
-    soil_type: 'Clay Loam',
-    temperature: 28,
-    moisture: 350,
-    nitrogen: 180,
-    phosphorus: 15,
-    potassium: 250,
-    timestamp: new Date()
-  };
+// Connect to real MQTT broker and receive ESP32 data
+const connectToRealMQTT = () => {
+  console.log('🔌 Connecting to HiveMQ Cloud for real ESP32 data...');
   
-  store.updateSensorData(mockData);
+  mqttService.value = new MQTTSensorService();
+  
+  mqttService.value.connectMQTT(
+    // On data received from ESP32
+    (sensorData: SensorData) => {
+      console.log('📡 Real sensor data received from ESP32:', sensorData);
+      store.updateSensorData(sensorData);
+    },
+    // On error
+    (error: Error) => {
+      console.error('❌ MQTT Error:', error);
+      alert('Failed to connect to MQTT broker. Check console for details.');
+      store.setMQTTConnection(false);
+    },
+    // On connected
+    () => {
+      console.log('✅ Connected! Waiting for ESP32 sensor data...');
+      store.setMQTTConnection(true);
+    }
+  );
+};
+
+// Disconnect from MQTT
+const disconnectMQTT = () => {
+  if (mqttService.value) {
+    mqttService.value.disconnectMQTT();
+    mqttService.value = null;
+  }
+  store.setMQTTConnection(false);
+  console.log('🔌 Disconnected from MQTT');
 };
 
 // Monitor online/offline status
@@ -158,7 +180,10 @@ onMounted(() => {
   });
 });
 
-import { computed } from 'vue';
+// Cleanup on component unmount
+onUnmounted(() => {
+  disconnectMQTT();
+});
 </script>
 
 <style scoped>

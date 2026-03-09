@@ -122,20 +122,23 @@ void readSensors() {
 }
 
 void publishSensorData() {
-  // Create JSON payload
+  // Create JSON payload with all sensor values
   String payload = "{";
   payload += "\"temperature\":" + String(temperature, 2) + ",";
   payload += "\"moisture\":" + String(moisture) + ",";
   payload += "\"soil_ph\":" + String(soil_ph, 2) + ",";
-  payload += "\"soil_type\":\"loamy\",";
+  payload += "\"nitrogen\":180,";      // Add NPK sensor values here if available
+  payload += "\"phosphorus\":15,";     // Or use actual sensor readings
+  payload += "\"potassium\":250,";     // Example: analogRead(NPK_SENSOR_PIN)
+  payload += "\"soil_type\":\"Clay Loam\",";
   payload += "\"timestamp\":\"" + String(millis()) + "\"";
   payload += "}";
 
   // Publish to MQTT topic
   if (client.publish(mqtt_topic, payload.c_str())) {
-    Serial.println("Published: " + payload);
+    Serial.println("✅ Published: " + payload);
   } else {
-    Serial.println("Publish failed");
+    Serial.println("❌ Publish failed");
   }
 }
 
