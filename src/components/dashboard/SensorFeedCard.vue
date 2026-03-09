@@ -80,10 +80,62 @@
         </div>
       </div>
       
+      <!-- NPK Levels -->
+      <div class="gauge-container">
+        <div class="gauge-label">
+          <span class="icon">🌱</span>
+          <span class="text-sm font-medium">Nitrogen (N)</span>
+        </div>
+        <div class="gauge-visual">
+          <div 
+            class="gauge-meter bg-success"
+            :style="{ width: getNutrientPercentage(sensorData.nitrogen || 0, 500) + '%' }"
+          ></div>
+        </div>
+        <div class="gauge-value">
+          <span class="value-number text-2xl font-bold">{{ sensorData.nitrogen || 0 }}</span>
+          <span class="value-unit text-sm text-earth-gray">ppm</span>
+        </div>
+      </div>
+
+      <div class="gauge-container">
+        <div class="gauge-label">
+          <span class="icon">🧪</span>
+          <span class="text-sm font-medium">Phosphorus (P)</span>
+        </div>
+        <div class="gauge-visual">
+          <div 
+            class="gauge-meter bg-warning"
+            :style="{ width: getNutrientPercentage(sensorData.phosphorus || 0, 100) + '%' }"
+          ></div>
+        </div>
+        <div class="gauge-value">
+          <span class="value-number text-2xl font-bold">{{ sensorData.phosphorus || 0 }}</span>
+          <span class="value-unit text-sm text-earth-gray">ppm</span>
+        </div>
+      </div>
+
+      <div class="gauge-container">
+        <div class="gauge-label">
+          <span class="icon">🔬</span>
+          <span class="text-sm font-medium">Potassium (K)</span>
+        </div>
+        <div class="gauge-visual">
+          <div 
+            class="gauge-meter bg-info"
+            :style="{ width: getNutrientPercentage(sensorData.potassium || 0, 500) + '%' }"
+          ></div>
+        </div>
+        <div class="gauge-value">
+          <span class="value-number text-2xl font-bold">{{ sensorData.potassium || 0 }}</span>
+          <span class="value-unit text-sm text-earth-gray">ppm</span>
+        </div>
+      </div>
+      
       <!-- Soil Type -->
       <div class="soil-type-display">
         <div class="gauge-label">
-          <span class="icon">🌱</span>
+          <span class="icon">🏞️</span>
           <span class="text-sm font-medium">Soil Type - மண் வகை</span>
         </div>
         <div class="soil-type-badge">
@@ -152,6 +204,11 @@ const getTempClass = (temp: number): string => {
 const getTempPercentage = (temp: number): number => {
   // Map 10-40°C to 0-100%
   return ((temp - 10) / 30) * 100;
+};
+
+// NPK Helper Functions
+const getNutrientPercentage = (value: number, max: number): number => {
+  return Math.min((value / max) * 100, 100);
 };
 
 // Format timestamp

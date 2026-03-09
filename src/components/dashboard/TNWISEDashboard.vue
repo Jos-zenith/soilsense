@@ -40,31 +40,35 @@
     
     <!-- Bento Grid Dashboard -->
     <main class="bento-grid">
-      <!-- Row 1: Sensor Feed (spans 2 columns) + Yield Slider -->
+      <!-- Row 1: Sensor Feed (spans 2 columns) + pH Input -->
       <div class="grid-wide grid-item">
         <SensorFeedCard />
       </div>
       
       <div class="grid-item">
-        <YieldSliderCard />
+        <ManualPhInput />
       </div>
       
-      <!-- Row 2: Crop Match Matrix (full width) -->
-      <div class="grid-full grid-item">
-        <CropMatchMatrix />
-      </div>
-      
-      <!-- Row 3: Money Saved + Voice Guidance -->
+      <!-- Row 2: Yield Slider + Voice Guidance -->
       <div class="grid-item">
-        <MoneySavedCard />
+        <YieldSliderCard />
       </div>
       
       <div class="grid-item">
         <VoiceGuidance />
       </div>
       
-      <!-- Row 4: Nutrient Balance (full width) -->
+      <!-- Row 3: Crop Match Matrix (full width) -->
       <div class="grid-full grid-item">
+        <CropMatchMatrix />
+      </div>
+      
+      <!-- Row 4: Money Saved + Nutrient Balance -->
+      <div class="grid-item">
+        <MoneySavedCard />
+      </div>
+      
+      <div class="grid-item">
         <NutrientBalanceCard />
       </div>
       
@@ -110,6 +114,7 @@ import { useAppStore } from '../../stores/appStore';
 import { MQTTSensorService } from '../../services/mqttService';
 import type { SensorData } from '../../types/crop';
 import SensorFeedCard from './SensorFeedCard.vue';
+import ManualPhInput from './ManualPhInput.vue';
 import YieldSliderCard from './YieldSliderCard.vue';
 import CropMatchMatrix from './CropMatchMatrix.vue';
 import MoneySavedCard from './MoneySavedCard.vue';

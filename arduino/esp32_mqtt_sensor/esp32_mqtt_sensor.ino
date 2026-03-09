@@ -1,49 +1,69 @@
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <PubSubClient.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
-// Wi-Fi credentials - Connect to existing WiFi network
-const char* ssid = "pooja";
-const char* password = "12345678";
+// Wi-Fi credentials
+const char* ssid = "ZE A35";
+const char* password = "dontknow";
 
-// HiveMQ Cloud MQTT Broker settings
+// HiveMQ Cloud MQTT Broker
 const char* mqtt_server = "bec6e48a9b5e4d27860b9d4d491e6d88.s1.eu.hivemq.cloud";
-const int mqtt_port = 8883; // TLS port for secure connection
+const int mqtt_port = 8883;
 const char* mqtt_username = "hivemq.webclient.1773056535268";
-const char* mqtt_password = "FtTa<R3gr29S,VwO:@0n"
-const char* mqtt_client_id = "SoilSenseThozhan_01"; // Unique client ID
+const char* mqtt_password = "FtTa<R3gr29S,VwO:@0n";
+const char* mqtt_client_id = "SoilSenseThozhan_01";
 const char* mqtt_topic = "soilsense/sensor/data";
 const char* mqtt_ph_topic = "soilsense/sensor/ph";
 
-// Sensor pins (adjust based on your hardware)
-#define TEMP_SENSOR_PIN 34
-#define MOISTURE_SENSOR_PIN 35
-#define PH_SENSOR_PIN 32
+// Sensor pins
+#define MOISTURE_PIN 34
+#define TEMP_PIN 4
 
-WiFiClient espClient;
+#define MAX485_RX 16   // RO
+#define MAX485_TX 17   // DI
+#define MAX485_CONTROL 18 // RE + DE
+
+// DS18B20 temperature sensor
+OneWire oneWire(TEMP_PIN);
+DallasTemperature sensors(&oneWire);
+
+// MQTT
+WiFiClientSecure espClient;
 PubSubClient client(espClient);
 
-// Sensor data variables
+// Sensor variables
 float temperature = 0.0;
 int moisture = 0;
-float soil_ph = 7.0;
+float soil_ph = 7.0;  // manual input via MQTT
+int nitrogen = 0;
+int phosphorus = 0;
+int potassium = 0;
 
-// Timing variables
+// Timing
 unsigned long lastPublish = 0;
-const long publishInterval = 5000; // Publish every 5 seconds
+const long publishInterval = 5000;
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  // Initialize sensor pins
-  pinMode(TEMP_SENSOR_PIN, INPUT);
-  pinMode(MOISTURE_SENSOR_PIN, INPUT);
-  pinMode(PH_SENSOR_PIN, INPUT);
+  // Moisture pin
+  pinMode(MOISTURE_PIN, INPUT);
 
-  // Connect to Wi-Fi
+  // MAX485 control pin
+  pinMode(MAX485_CONTROL, OUTPUT);
+  digitalWrite(MAX485_CONTROL, LOW); // start in receive mode
+
+  // Start temperature sensor
+  sensors.begin();
+
+  // Connect Wi-Fi
   setupWiFi();
 
-  // Setup MQTT
+  // MQTT secure setup
+  espClient.setInsecure();
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(mqttCallback);
 
@@ -51,19 +71,14 @@ void setup() {
 }
 
 void setupWiFi() {
-  delay(10);
-  Serial.println();
   Serial.print("Connecting to WiFi: ");
   Serial.println(ssid);
 
-  // Connect to existing WiFi network
   WiFi.begin(ssid, password);
-  
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
@@ -71,15 +86,12 @@ void setupWiFi() {
 }
 
 void reconnectMQTT() {
-  // Loop until we're reconnected
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
-    
-    // Attempt to connect with username and password
     if (client.connect(mqtt_client_id, mqtt_username, mqtt_password)) {
       Serial.println("connected");
-      // Subscribe to pH input topic (for manual pH entry from web)
       client.subscribe(mqtt_ph_topic);
+      Serial.println("Subscribed to pH topic");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -90,17 +102,15 @@ void reconnectMQTT() {
 }
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  
   String message = "";
   for (unsigned int i = 0; i < length; i++) {
     message += (char)payload[i];
   }
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
   Serial.println(message);
 
-  // Handle pH value updates from web interface
   if (String(topic) == mqtt_ph_topic) {
     soil_ph = message.toFloat();
     Serial.print("pH updated to: ");
@@ -109,32 +119,36 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 }
 
 void readSensors() {
-  // Read temperature (example - adjust based on your sensor)
-  int tempRaw = analogRead(TEMP_SENSOR_PIN);
-  temperature = map(tempRaw, 0, 4095, 0, 50); // Map to 0-50°C range
+  // Moisture sensor
+  moisture = analogRead(MOISTURE_PIN);
+
+  // Temperature sensor
+  sensors.requestTemperatures();
+  temperature = sensors.getTempCByIndex(0);
+
+  // NPK sensor (simulated for now; replace with MAX485 reading later)
+  // Set MAX485 to receive mode
+  digitalWrite(MAX485_CONTROL, LOW);
   
-  // Read moisture (analog value)
-  moisture = analogRead(MOISTURE_SENSOR_PIN);
-  
-  // Read pH (example calculation - adjust based on your sensor calibration)
-  int phRaw = analogRead(PH_SENSOR_PIN);
-  soil_ph = map(phRaw, 0, 4095, 0, 1400) / 100.0; // Map to pH 0-14
+  // Here you would read RS485 sensor values via Serial2 or Modbus
+  // For prototype, we simulate:
+  nitrogen = random(20, 50);
+  phosphorus = random(10, 30);
+  potassium = random(15, 40);
 }
 
 void publishSensorData() {
-  // Create JSON payload with all sensor values
   String payload = "{";
   payload += "\"temperature\":" + String(temperature, 2) + ",";
   payload += "\"moisture\":" + String(moisture) + ",";
   payload += "\"soil_ph\":" + String(soil_ph, 2) + ",";
-  payload += "\"nitrogen\":180,";      // Add NPK sensor values here if available
-  payload += "\"phosphorus\":15,";     // Or use actual sensor readings
-  payload += "\"potassium\":250,";     // Example: analogRead(NPK_SENSOR_PIN)
+  payload += "\"nitrogen\":" + String(nitrogen) + ",";
+  payload += "\"phosphorus\":" + String(phosphorus) + ",";
+  payload += "\"potassium\":" + String(potassium) + ",";
   payload += "\"soil_type\":\"Clay Loam\",";
   payload += "\"timestamp\":\"" + String(millis()) + "\"";
   payload += "}";
 
-  // Publish to MQTT topic
   if (client.publish(mqtt_topic, payload.c_str())) {
     Serial.println("✅ Published: " + payload);
   } else {
@@ -143,17 +157,14 @@ void publishSensorData() {
 }
 
 void loop() {
-  // Maintain MQTT connection
   if (!client.connected()) {
     reconnectMQTT();
   }
   client.loop();
 
-  // Read and publish sensor data at regular intervals
   unsigned long currentMillis = millis();
   if (currentMillis - lastPublish >= publishInterval) {
     lastPublish = currentMillis;
-    
     readSensors();
     publishSensorData();
   }

@@ -5,13 +5,13 @@
  * To use: Replace the MQTT methods in sensorService.ts with this implementation
  */
 
-import mqtt, { MqttClient } from 'mqtt';
+import mqtt from 'mqtt';
 import type { SensorData } from '../types/crop';
 import type { MQTTConfig } from '../config/mqttConfig';
 import { defaultMQTTConfig } from '../config/mqttConfig';
 
 export class MQTTSensorService {
-  private mqttClient: MqttClient | null = null;
+  private mqttClient: mqtt.MqttClient | null = null;
   private mqttConfig: MQTTConfig;
   private dataCallback: ((data: SensorData) => void) | null = null;
 

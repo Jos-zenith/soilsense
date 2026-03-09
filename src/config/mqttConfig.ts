@@ -34,7 +34,7 @@ export const defaultMQTTConfig: MQTTConfig = {
   protocol: 'wss',
   clientId: `soilsense_web_${Math.random().toString(16).substr(2, 8)}`,
   username: 'hivemq.webclient.1773056535268',
-  password: 'FtTa<R3gr29S,VwO:@0n'
+  password: 'FtTa<R3gr29S,VwO:@0n',
   topics: {
     sensorData: 'soilsense/sensor/data',
     sensorPh: 'soilsense/sensor/ph',
