@@ -26,11 +26,15 @@ export interface MQTTConfig {
   };
 }
 
+// HiveMQ Cloud Cluster Configuration
+// TODO: Add your HiveMQ credentials from the Manage Cluster page
 export const defaultMQTTConfig: MQTTConfig = {
-  brokerUrl: 'broker.hivemq.com', // Free public broker
-  port: 8884,
+  brokerUrl: 'bec6e48a9b5e4d27860b9d4d491e6d88.s1.eu.hivemq.cloud',
+  port: 8884, // WebSocket Secure port
   protocol: 'wss',
   clientId: `soilsense_web_${Math.random().toString(16).substr(2, 8)}`,
+  username: 'YOUR_HIVEMQ_USERNAME', // ⚠️ Replace with your HiveMQ username
+  password: 'YOUR_HIVEMQ_PASSWORD', // ⚠️ Replace with your HiveMQ password
   topics: {
     sensorData: 'soilsense/sensor/data',
     sensorPh: 'soilsense/sensor/ph',

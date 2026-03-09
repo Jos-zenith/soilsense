@@ -1,13 +1,16 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-// Wi-Fi credentials for ESP32 Access Point
+// Wi-Fi credentials - Connect to existing WiFi network
 const char* ssid = "pooja";
 const char* password = "12345678";
 
-// MQTT Broker settings (update with your broker details)
-const char* mqtt_server = "broker.hivemq.com"; // or use "test.mosquitto.org"
-const int mqtt_port = 1883;
+// HiveMQ Cloud MQTT Broker settings
+// ⚠️ TODO: Replace with your HiveMQ credentials from Manage Cluster page
+const char* mqtt_server = "bec6e48a9b5e4d27860b9d4d491e6d88.s1.eu.hivemq.cloud";
+const int mqtt_port = 8883; // TLS port for secure connection
+const char* mqtt_username = "YOUR_HIVEMQ_USERNAME"; // ⚠️ Add your username
+const char* mqtt_password = "YOUR_HIVEMQ_PASSWORD"; // ⚠️ Add your password
 const char* mqtt_client_id = "SoilSenseThozhan_01"; // Unique client ID
 const char* mqtt_topic = "soilsense/sensor/data";
 const char* mqtt_ph_topic = "soilsense/sensor/ph";
@@ -54,21 +57,18 @@ void setupWiFi() {
   Serial.print("Connecting to WiFi: ");
   Serial.println(ssid);
 
-  // Start Wi-Fi in Access Point mode
-  WiFi.softAP(ssid, password);
+  // Connect to existing WiFi network
+  WiFi.begin(ssid, password);
   
-  Serial.println("WiFi AP Started");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  Serial.println("");
+  Serial.println("WiFi connected");
   Serial.print("IP address: ");
-  Serial.println(WiFi.softAPIP());
-
-  // Alternatively, connect to existing WiFi network:
-  // WiFi.begin(ssid, password);
-  // while (WiFi.status() != WL_CONNECTED) {
-  //   delay(500);
-  //   Serial.print(".");
-  // }
-  // Serial.println("\nWiFi connected");
-  // Serial.println("IP address: " + WiFi.localIP());
+  Serial.println(WiFi.localIP());
 }
 
 void reconnectMQTT() {
@@ -76,8 +76,8 @@ void reconnectMQTT() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     
-    // Attempt to connect
-    if (client.connect(mqtt_client_id)) {
+    // Attempt to connect with username and password
+    if (client.connect(mqtt_client_id, mqtt_username, mqtt_password)) {
       Serial.println("connected");
       // Subscribe to pH input topic (for manual pH entry from web)
       client.subscribe(mqtt_ph_topic);
