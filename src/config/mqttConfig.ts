@@ -33,8 +33,8 @@ export const defaultMQTTConfig: MQTTConfig = {
   port: 8884, // WebSocket Secure port
   protocol: 'wss',
   clientId: `soilsense_web_${Math.random().toString(16).substr(2, 8)}`,
-  username: 'YOUR_HIVEMQ_USERNAME', // ⚠️ Replace with your HiveMQ username
-  password: 'YOUR_HIVEMQ_PASSWORD', // ⚠️ Replace with your HiveMQ password
+  username: 'hivemq.webclient.1773056535268',
+  password: 'FtTa<R3gr29S,VwO:@0n'
   topics: {
     sensorData: 'soilsense/sensor/data',
     sensorPh: 'soilsense/sensor/ph',

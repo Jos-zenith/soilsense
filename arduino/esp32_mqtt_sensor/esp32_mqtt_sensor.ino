@@ -6,11 +6,10 @@ const char* ssid = "pooja";
 const char* password = "12345678";
 
 // HiveMQ Cloud MQTT Broker settings
-// ⚠️ TODO: Replace with your HiveMQ credentials from Manage Cluster page
 const char* mqtt_server = "bec6e48a9b5e4d27860b9d4d491e6d88.s1.eu.hivemq.cloud";
 const int mqtt_port = 8883; // TLS port for secure connection
-const char* mqtt_username = "YOUR_HIVEMQ_USERNAME"; // ⚠️ Add your username
-const char* mqtt_password = "YOUR_HIVEMQ_PASSWORD"; // ⚠️ Add your password
+const char* mqtt_username = "hivemq.webclient.1773056535268";
+const char* mqtt_password = "FtTa<R3gr29S,VwO:@0n"
 const char* mqtt_client_id = "SoilSenseThozhan_01"; // Unique client ID
 const char* mqtt_topic = "soilsense/sensor/data";
 const char* mqtt_ph_topic = "soilsense/sensor/ph";
