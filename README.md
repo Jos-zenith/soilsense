@@ -1,6 +1,4 @@
-# 🌾 SoilSense Thozhan - மண் உணர்வு தோழன்
-
-## TNWISE 2026 Award-Winning UI
+# 🌾 SoilSense Thozhan
 
 A high-end, Vue 3-powered **Agricultural Knowledge Hub** designed for Tamil Nadu's marginal farmers. This application transcends being a mere "tool" and serves as a comprehensive platform bridging TNAU scientific data with rural farming reality.
 
@@ -222,7 +220,7 @@ To test without real sensors, click "Connect Sensors" button. It will simulate:
 
 ---
 
-## 🏆 Why This Wins TNWISE 2026
+## 🏆 Why This
 
 1. **Radical Accessibility**: Voice + Offline + Tamil-first design
 2. **Statistical Rigor**: TNAU STCR equations visualized
